@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دانلود سرورهای VPN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            direction: rtl;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #16213e, #0f3460);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #00d4aa;
+        }
+
+        .header h1 {
+            color: #00d4aa;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: #16213e;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 30px;
+            border: 2px solid #00d4aa;
+            background: transparent;
+            color: #00d4aa;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            background: rgba(0, 212, 170, 0.1);
+        }
+
+        .tab-btn.active {
+            background: #00d4aa;
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .region-title {
+            color: #00d4aa;
+            font-size: 20px;
+            text-align: center;
+            margin: 25px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2a2a4a;
+        }
+
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 15px;
+        }
+
+        .server-card {
+            background: linear-gradient(135deg, #1e2a4a, #162040);
+            border-radius: 12px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #2a2a5a;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .server-card:hover {
+            transform: translateY(-2px);
+            border-color: #00d4aa;
+        }
+
+        .server-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .flag {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .server-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .server-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .server-address {
+            font-size: 12px;
+            color: #888;
+            margin-top: 2px;
+            direction: ltr;
+            text-align: right;
+        }
+
+        .download-btn {
+            background: #00d4aa;
+            color: #1a1a2e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #00b894;
+        }
+
+        .download-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .cisco-config-card {
+            background: linear-gradient(135deg, #1e2a4a, #162040);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #2a2a5a;
+        }
+
+        .cisco-config-card h3 {
+            color: #00d4aa;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .config-field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #0f1a30;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .config-label {
+            color: #a0a0a0;
+            font-size: 14px;
+        }
+
+        .config-value {
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            font-size: 14px;
+            user-select: all;
+        }
+
+        .note-box {
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid #00d4aa;
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-align: center;
+            margin: 15px 0;
+            color: #e0e0e0;
+        }
+
+        .note-box strong {
+            color: #00d4aa;
+        }
+
+        .l2tp-config-card {
+            background: linear-gradient(135deg, #1e2a4a, #162040);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #2a2a5a;
+        }
+
+        .l2tp-config-card h3 {
+            color: #00d4aa;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .copy-btn {
+            background: #3a3a6a;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: inherit;
+            transition: background 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #00d4aa;
+            color: #1a1a2e;
+        }
+
+        @media (max-width: 600px) {
+            .servers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .server-card {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+
+            .server-info {
+                flex-direction: column;
+            }
+
+            .tabs {
+                gap: 8px;
+            }
+
+            .tab-btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>دانلود سرورهای VPN</h1>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('openvpn')">OpenVPN</button>
+        <button class="tab-btn" onclick="switchTab('cisco')">سرور Cisco</button>
+        <button class="tab-btn" onclick="switchTab('l2tp')">L2TP / IPsec</button>
+    </div>
+
+    <!-- ==================== OpenVPN TAB ==================== -->
+    <div id="openvpn" class="tab-content active">
+        <div id="openvpn-servers"></div>
+    </div>
+
+    <!-- ==================== CISCO TAB ==================== -->
+    <div id="cisco" class="tab-content">
+        <div id="cisco-servers"></div>
+        <div class="cisco-config-card">
+            <h3>تنظیمات Cisco AnyConnect</h3>
+            <div class="config-field">
+                <span class="config-label">نام کاربری:</span>
+                <span class="config-value" id="cisco-username">vpn_user</span>
+            </div>
+            <div class="config-field">
+                <span class="config-label">رمز عبور:</span>
+                <span class="config-value" id="cisco-password">vpn_pass</span>
+            </div>
+            <div class="config-field">
+                <span class="config-label">نوع گروپ:</span>
+                <span class="config-value">VPN</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== L2TP TAB ==================== -->
+    <div id="l2tp" class="tab-content">
+        <div id="l2tp-servers"></div>
+        <div class="l2tp-config-card">
+            <h3>تنظیمات L2TP/IPsec</h3>
+            <div class="config-field">
+                <span class="config-label">نوع اتصال:</span>
+                <span class="config-value">L2TP/IPsec با پیش‌shared key</span>
+            </div>
+            <div class="config-field">
+                <span class="config-label">کلید از پیش مشترک (PSK):</span>
+                <span class="config-value" id="l2tp-psk-value">l2tp_secret_key</span>
+            </div>
+            <div class="config-field">
+                <span class="config-label">نام کاربری:</span>
+                <span class="config-value" id="l2tp-username">vpn_user</span>
+            </div>
+            <div class="config-field">
+                <span class="config-label">رمز عبور:</span>
+                <span class="config-value" id="l2tp-password">vpn_pass</span>
+            </div>
+            <div class="config-field">
+                <span class="config-label">پورت:</span>
+                <span class="config-value">1701</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const REGION_MAP = {europe:'اروپا (Europe)',asia:'آسیا و اقیانوسیه (Asia Pacific)',americas:'آمریکا (Americas)',mea:'خاورمیانه و آفریقا (MEA)'};
+        const REGION_ORDER = ['europe','asia','americas','mea'];
+
+        function flagHtml(emoji, alt) {
+            try {
+                const code = [...emoji].map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 97)).join('');
+                return `<img src="https://flagcdn.com/w40/${code}.png" alt="${alt}" style="width:32px;height:24px;border-radius:4px;vertical-align:middle;" onerror="this.outerHTML='<span style=\\'font-size:32px\\'>${emoji}</span>'">`;
+            } catch(e) {
+                return `<span style="font-size:32px">${emoji}</span>`;
+            }
+        }
+
+        function getDefaultServers() {
+            return {
+                openvpn: [
+                    {id:'ov1',name:'سوئیس',flag:'🇨🇭',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov2',name:'ایتالیا',flag:'🇮🇹',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov3',name:'فرانسه',flag:'🇫🇷',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov4',name:'فنلاند',flag:'🇫🇮',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov5',name:'سوئد',flag:'🇸🇪',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov6',name:'لهستان',flag:'🇵🇱',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov7',name:'اوکراین',flag:'🇺🇦',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov8',name:'ترکیه',flag:'🇹🇷',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov9',name:'آلمان',flag:'🇩🇪',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov10',name:'اسپانیا',flag:'🇪🇸',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov11',name:'هلند',flag:'🇳🇱',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov12',name:'انگلیس',flag:'🇬🇧',region:'europe',status:'active',ovpnFileName:''},
+                    {id:'ov13',name:'اندونزی',flag:'🇮🇩',region:'asia',status:'active',ovpnFileName:''},
+                    {id:'ov14',name:'چین',flag:'🇨🇳',region:'asia',status:'active',ovpnFileName:''},
+                    {id:'ov15',name:'استرالیا',flag:'🇦🇺',region:'asia',status:'active',ovpnFileName:''},
+                    {id:'ov16',name:'ایالات متحده',flag:'🇺🇸',region:'americas',status:'active',ovpnFileName:''},
+                    {id:'ov17',name:'کانادا',flag:'🇨🇦',region:'americas',status:'active',ovpnFileName:''},
+                    {id:'ov18',name:'ایران',flag:'🇮🇷',region:'mea',status:'active',ovpnFileName:''},
+                    {id:'ov19',name:'امارات متحده',flag:'🇦🇪',region:'mea',status:'active',ovpnFileName:''},
+                    {id:'ov20',name:'ارمنستان',flag:'🇦🇲',region:'mea',status:'active',ovpnFileName:''},
+                    {id:'ov21',name:'آذربایجان',flag:'🇦🇿',region:'mea',status:'active',ovpnFileName:''},
+                ],
+                cisco: [
+                    {id:'ci1',name:'سوئیس',flag:'🇨🇭',address:'vpn-ch.cisco.site',region:'europe',status:'active'},
+                    {id:'ci2',name:'ایتالیا',flag:'🇮🇹',address:'vpn-it.cisco.site',region:'europe',status:'active'},
+                    {id:'ci3',name:'فرانسه',flag:'🇫🇷',address:'vpn-fr.cisco.site',region:'europe',status:'active'},
+                    {id:'ci4',name:'آلمان',flag:'🇩🇪',address:'vpn-de.cisco.site',region:'europe',status:'active'},
+                    {id:'ci5',name:'انگلیس',flag:'🇬🇧',address:'vpn-gb.cisco.site',region:'europe',status:'active'},
+                    {id:'ci6',name:'هلند',flag:'🇳🇱',address:'vpn-nl.cisco.site',region:'europe',status:'active'},
+                    {id:'ci7',name:'سنگاپور',flag:'🇸🇬',address:'vpn-sg.cisco.site',region:'asia',status:'active'},
+                    {id:'ci8',name:'ژاپن',flag:'🇯🇵',address:'vpn-jp.cisco.site',region:'asia',status:'active'},
+                    {id:'ci9',name:'استرالیا',flag:'🇦🇺',address:'vpn-au.cisco.site',region:'asia',status:'active'},
+                    {id:'ci10',name:'ایالات متحده',flag:'🇺🇸',address:'vpn-us.cisco.site',region:'americas',status:'active'},
+                    {id:'ci11',name:'کانادا',flag:'🇨🇦',address:'vpn-ca.cisco.site',region:'americas',status:'active'},
+                ],
+                l2tp: [
+                    {id:'l1',name:'سوئیس',flag:'🇨🇭',address:'l2tp-ch.vpn.server',region:'europe',status:'active'},
+                    {id:'l2',name:'ایتالیا',flag:'🇮🇹',address:'l2tp-it.vpn.server',region:'europe',status:'active'},
+                    {id:'l3',name:'فرانسه',flag:'🇫🇷',address:'l2tp-fr.vpn.server',region:'europe',status:'active'},
+                    {id:'l4',name:'آلمان',flag:'🇩🇪',address:'l2tp-de.vpn.server',region:'europe',status:'active'},
+                    {id:'l5',name:'انگلیس',flag:'🇬🇧',address:'l2tp-gb.vpn.server',region:'europe',status:'active'},
+                    {id:'l6',name:'هلند',flag:'🇳🇱',address:'l2tp-nl.vpn.server',region:'europe',status:'active'},
+                    {id:'l7',name:'سنگاپور',flag:'🇸🇬',address:'l2tp-sg.vpn.server',region:'asia',status:'active'},
+                    {id:'l8',name:'ژاپن',flag:'🇯🇵',address:'l2tp-jp.vpn.server',region:'asia',status:'active'},
+                    {id:'l9',name:'استرالیا',flag:'🇦🇺',address:'l2tp-au.vpn.server',region:'asia',status:'active'},
+                    {id:'l10',name:'ایالات متحده',flag:'🇺🇸',address:'l2tp-us.vpn.server',region:'americas',status:'active'},
+                    {id:'l11',name:'کانادا',flag:'🇨🇦',address:'l2tp-ca.vpn.server',region:'americas',status:'active'},
+                ]
+            };
+        }
+
+        function loadData() {
+            let data = localStorage.getItem('vpn_servers');
+            if (!data) {
+                data = getDefaultServers();
+                localStorage.setItem('vpn_servers', JSON.stringify(data));
+            } else {
+                data = JSON.parse(data);
+            }
+            return data;
+        }
+
+        function loadSettings() {
+            let s = localStorage.getItem('vpn_settings');
+            if (!s) { s = {password:'admin123',showInactive:false,ciscoUser:'vpn_user',ciscoPass:'vpn_pass',l2tpPsk:'l2tp_secret_key',l2tpUser:'vpn_user',l2tpPass:'vpn_pass'}; localStorage.setItem('vpn_settings', JSON.stringify(s)); }
+            else { s = JSON.parse(s); }
+            return s;
+        }
+
+        function buildServersGrid(servers, type) {
+            const settings = loadSettings();
+            const filtered = settings.showInactive ? servers : servers.filter(s => s.status === 'active');
+            if (filtered.length === 0) return '<div style="text-align:center;padding:20px;color:#666;">سروری یافت نشد</div>';
+            return filtered.map(s => {
+                const isOvpn = type === 'openvpn';
+                let btnAction, btnLabel, btnIcon;
+                if (isOvpn) {
+                    btnAction = `downloadOvpnFile('${s.name}')`;
+                    btnLabel = 'دانلود';
+                    btnIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+                } else {
+                    btnAction = `copyToClipboard('${s.address}')`;
+                    btnLabel = 'کپی';
+                    btnIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+                }
+                return `
+                <div class="server-card">
+                    <div class="server-info">
+                        ${flagHtml(s.flag, s.name)}
+                        <div class="server-details">
+                            <span class="server-name">${s.name}</span>
+                            ${!isOvpn ? `<span class="server-address">${s.address}</span>` : ''}
+                        </div>
+                    </div>
+                    <button class="download-btn" onclick="${btnAction}">
+                        ${btnIcon}
+                        ${btnLabel}
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        function buildRegionSections(servers, type) {
+            return REGION_ORDER.map(region => {
+                const regionServers = servers.filter(s => s.region === region);
+                if (regionServers.length === 0) return '';
+                return `<h2 class="region-title">${REGION_MAP[region]}</h2>
+                <div class="servers-grid">${buildServersGrid(regionServers, type)}</div>`;
+            }).join('');
+        }
+
+        function renderPage() {
+            const data = loadData();
+            const settings = loadSettings();
+
+            document.getElementById('openvpn-servers').innerHTML = buildRegionSections(data.openvpn, 'openvpn');
+            document.getElementById('cisco-servers').innerHTML = buildRegionSections(data.cisco, 'cisco');
+            document.getElementById('l2tp-servers').innerHTML = buildRegionSections(data.l2tp, 'l2tp');
+
+            document.getElementById('cisco-username').textContent = settings.ciscoUser;
+            document.getElementById('cisco-password').textContent = settings.ciscoPass;
+            document.getElementById('l2tp-psk-value').textContent = settings.l2tpPsk;
+            document.getElementById('l2tp-username').textContent = settings.l2tpUser;
+            document.getElementById('l2tp-password').textContent = settings.l2tpPass;
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            const buttons = document.querySelectorAll('.tab-btn');
+            const tabMap = { 'openvpn': 0, 'cisco': 1, 'l2tp': 2 };
+            buttons[tabMap[tabId]].classList.add('active');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('آدرس سرور کپی شد!');
+            }).catch(() => {
+                const input = document.createElement('input');
+                input.value = text;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast('آدرس سرور کپی شد!');
+            });
+        }
+
+        function downloadOvpnFile(name) {
+            const data = loadData();
+            const server = data.openvpn.find(s => s.name === name);
+            const fileName = (server && server.ovpnFileName) ? server.ovpnFileName : (name + '.ovpn');
+            const link = document.createElement('a');
+            link.href = 'file/' + encodeURIComponent(fileName);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('فایل کانفیگ دانلود شد!');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#00d4aa;color:#1a1a2e;padding:12px 24px;border-radius:8px;font-weight:bold;z-index:9999;';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        renderPage();
+    </script>
+    <div style="text-align:center;padding:20px;border-top:1px solid #2a2a4a;margin-top:20px;">
+        <a href="https://github.com/hasan1808/paneladdres.git" target="_blank" style="color:#888;text-decoration:none;font-size:13px;display:inline-flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            GitHub
+        </a>
+    </div>
+</body>
+</html>

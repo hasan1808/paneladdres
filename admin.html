@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت VPN</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            direction: rtl;
+            min-height: 100vh;
+        }
+
+        /* ===== LOGIN ===== */
+        .login-overlay {
+            position: fixed; inset: 0;
+            background: #0f0f23;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        .login-box {
+            background: #16213e;
+            border: 1px solid #2a2a5a;
+            border-radius: 16px;
+            padding: 40px;
+            width: 380px;
+            max-width: 90vw;
+            text-align: center;
+        }
+        .login-box h2 { color: #00d4aa; margin-bottom: 8px; font-size: 22px; }
+        .login-box p { color: #888; margin-bottom: 25px; font-size: 13px; }
+        .login-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid #2a2a5a;
+            background: #0f1a30;
+            color: #fff;
+            font-size: 15px;
+            font-family: inherit;
+            margin-bottom: 14px;
+            direction: ltr;
+            text-align: center;
+        }
+        .login-box input:focus { outline: none; border-color: #00d4aa; }
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            background: #00d4aa;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 6px;
+        }
+        .login-box button:hover { background: #00b894; }
+        .login-error { color: #ff6b6b; font-size: 13px; margin-top: 8px; display: none; }
+
+        /* ===== MOBILE MENU TOGGLE ===== */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 10000;
+            width: 44px; height: 44px;
+            background: #16213e;
+            border: 1px solid #2a2a5a;
+            border-radius: 10px;
+            color: #00d4aa;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+        .mobile-menu-btn svg { width: 22px; height: 22px; pointer-events: none; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+        }
+        .sidebar-overlay.active { display: block; }
+
+        /* ===== SIDEBAR ===== */
+        .admin-layout { display: none; }
+        .admin-layout.active { display: flex; }
+
+        .sidebar {
+            width: 260px;
+            min-height: 100vh;
+            background: #16213e;
+            border-left: 1px solid #2a2a5a;
+            padding: 20px 0;
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 150;
+            transition: transform 0.3s;
+            transform: translateX(0);
+        }
+        .sidebar-header {
+            text-align: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #2a2a5a;
+            margin-bottom: 15px;
+        }
+        .sidebar-header h2 { color: #00d4aa; font-size: 18px; }
+        .sidebar-header small { color: #666; font-size: 11px; }
+        .sidebar-menu { list-style: none; }
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            color: #a0a0a0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-right: 3px solid transparent;
+        }
+        .sidebar-menu li a:hover,
+        .sidebar-menu li a.active {
+            background: rgba(0,212,170,0.08);
+            color: #00d4aa;
+            border-right-color: #00d4aa;
+        }
+        .sidebar-menu li a svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 15px 20px;
+            border-top: 1px solid #2a2a5a;
+        }
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #ff6b6b;
+            text-decoration: none;
+            font-size: 13px;
+            padding: 8px 0;
+        }
+        .sidebar-footer a:hover { color: #ff4757; }
+        .sidebar-footer a svg { width: 16px; height: 16px; }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            margin-right: 260px;
+            padding: 25px;
+            flex: 1;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .page-header h1 { font-size: 22px; color: #fff; }
+        .page-header .breadcrumb { color: #666; font-size: 13px; }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #1e2a4a, #162040);
+            border: 1px solid #2a2a5a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-card .stat-number { font-size: 32px; font-weight: bold; color: #00d4aa; }
+        .stat-card .stat-label { font-size: 13px; color: #888; margin-top: 5px; }
+        .stat-card.orange .stat-number { color: #ffa502; }
+        .stat-card.blue .stat-number { color: #70a1ff; }
+        .stat-card.red .stat-number { color: #ff6b6b; }
+
+        /* Server Table */
+        .table-container {
+            background: #16213e;
+            border: 1px solid #2a2a5a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            border-bottom: 1px solid #2a2a5a;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .table-header h3 { font-size: 16px; color: #fff; }
+        .btn-add {
+            background: #00d4aa;
+            color: #1a1a2e;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-add:hover { background: #00b894; }
+        .btn-add svg { width: 14px; height: 14px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #0f1a30;
+            padding: 12px 16px;
+            text-align: right;
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        td {
+            padding: 12px 16px;
+            border-top: 1px solid #1e2a4a;
+            font-size: 14px;
+        }
+        tr:hover td { background: rgba(0,212,170,0.03); }
+        .td-flag { font-size: 22px; }
+        .td-address { direction: ltr; text-align: right; color: #aaa; font-family: 'Courier New', monospace; font-size: 13px; }
+        .td-region { color: #70a1ff; font-size: 13px; }
+        .td-status { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: bold; white-space: nowrap; }
+        .td-status.active { background: rgba(0,212,170,0.15); color: #00d4aa; }
+        .td-status.inactive { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+
+        .td-actions { display: flex; gap: 6px; }
+        .btn-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            border: 1px solid #2a2a5a;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { border-color: #00d4aa; color: #00d4aa; }
+        .btn-icon.delete:hover { border-color: #ff6b6b; color: #ff6b6b; }
+        .btn-icon svg { width: 14px; height: 14px; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #16213e;
+            border: 1px solid #2a2a5a;
+            border-radius: 16px;
+            width: 500px;
+            max-width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+        }
+        .modal h3 { color: #00d4aa; margin-bottom: 20px; font-size: 18px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; color: #888; margin-bottom: 6px; }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #2a2a5a;
+            background: #0f1a30;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            direction: ltr;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus { outline: none; border-color: #00d4aa; }
+        .form-group select { cursor: pointer; }
+        .form-group select option { background: #0f1a30; }
+        .form-group textarea { resize: vertical; min-height: 80px; font-family: 'Courier New', monospace; font-size: 12px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save {
+            flex: 1;
+            padding: 11px;
+            background: #00d4aa;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-save:hover { background: #00b894; }
+        .btn-cancel {
+            flex: 1;
+            padding: 11px;
+            background: transparent;
+            color: #888;
+            border: 1px solid #2a2a5a;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-cancel:hover { border-color: #888; color: #fff; }
+
+        /* File Upload */
+        .file-upload-area {
+            border: 2px dashed #2a2a5a;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .file-upload-area:hover { border-color: #00d4aa; background: rgba(0,212,170,0.03); }
+        .file-upload-area svg { width: 36px; height: 36px; color: #555; margin-bottom: 8px; }
+        .file-upload-area p { font-size: 13px; color: #888; }
+        .file-upload-area .file-name { color: #00d4aa; font-weight: bold; font-size: 13px; margin-top: 6px; }
+        .file-upload-area input[type="file"] {
+            position: absolute; inset: 0;
+            opacity: 0; cursor: pointer;
+        }
+
+        .ovpn-content-box {
+            margin-top: 12px;
+            padding: 10px;
+            background: #0a0f1e;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #666;
+            max-height: 100px;
+            overflow-y: auto;
+            direction: ltr;
+            text-align: left;
+            display: none;
+        }
+
+        /* Settings Page */
+        .settings-section {
+            background: #16213e;
+            border: 1px solid #2a2a5a;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .settings-section h3 { color: #00d4aa; margin-bottom: 16px; font-size: 16px; }
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid #1e2a4a;
+            gap: 12px;
+        }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label { font-size: 14px; flex: 1; }
+        .settings-label small { display: block; color: #666; font-size: 12px; margin-top: 2px; }
+        .toggle {
+            position: relative;
+            width: 48px; height: 26px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .toggle input { display: none; }
+        .toggle-slider {
+            position: absolute; inset: 0;
+            background: #2a2a5a;
+            border-radius: 26px;
+            transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            top: 3px; right: 3px;
+            transition: 0.3s;
+        }
+        .toggle input:checked + .toggle-slider { background: #00d4aa; }
+        .toggle input:checked + .toggle-slider::before { transform: translateX(-22px); }
+
+        .settings-input {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #2a2a5a;
+            background: #0f1a30;
+            color: #fff;
+            font-size: 13px;
+            font-family: inherit;
+            direction: ltr;
+            width: 200px;
+            max-width: 100%;
+            flex-shrink: 0;
+        }
+        .settings-input:focus { outline: none; border-color: #00d4aa; }
+
+        .btn-settings-save {
+            background: #00d4aa;
+            color: #1a1a2e;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 10px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00d4aa;
+            color: #1a1a2e;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 99999;
+            display: none;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.3; }
+
+        /* ===== RESPONSIVE ===== */
+
+        /* Hide mobile table by default (shown only on small screens) */
+        .mobile-table { display: none; }
+
+        @media (max-width: 900px) {
+            .mobile-menu-btn { display: flex !important; }
+
+            .sidebar {
+                display: none;
+                width: 260px;
+                z-index: 150;
+            }
+            .sidebar.open { display: block !important; }
+
+            .main-content {
+                margin-right: 0;
+                padding: 16px;
+                padding-top: 66px;
+            }
+
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .stat-card { padding: 14px; }
+            .stat-card .stat-number { font-size: 24px; }
+
+            .page-header h1 { font-size: 18px; }
+
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .table-header .btn-add { justify-content: center; }
+
+            table { font-size: 13px; }
+            th, td { padding: 10px 10px; }
+            .td-address { font-size: 11px; }
+
+            .settings-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .settings-input { width: 100%; }
+
+            .file-upload-area p { font-size: 12px; }
+        }
+
+        @media (max-width: 700px) {
+            .desktop-table { display: none; }
+            .mobile-table { display: block; }
+
+            .mobile-card {
+                background: #0f1a30;
+                border: 1px solid #1e2a4a;
+                border-radius: 10px;
+                padding: 14px;
+                margin-bottom: 10px;
+            }
+            .mobile-card-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 10px;
+            }
+            .mobile-card-info {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .mobile-card-info .flag { font-size: 28px; }
+            .mobile-card-info .name { font-weight: bold; font-size: 15px; }
+            .mobile-card-details {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                margin-bottom: 10px;
+            }
+            .mobile-card-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 13px;
+            }
+            .mobile-card-row .label { color: #888; flex-shrink: 0; }
+            .mobile-card-row .value { color: #ccc; direction: ltr; font-family: 'Courier New', monospace; font-size: 12px; text-align: left; word-break: break-all; }
+            .mobile-card-actions {
+                display: flex;
+                gap: 8px;
+            }
+            .mobile-card-actions .btn-icon { flex: 1; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+            .stat-card { padding: 10px 6px; }
+            .stat-card .stat-number { font-size: 18px; }
+            .stat-card .stat-label { font-size: 10px; }
+
+            .form-row { grid-template-columns: 1fr; }
+
+            .modal { padding: 16px 14px; }
+            .modal h3 { font-size: 16px; }
+
+            .login-box { padding: 24px 16px; width: 95vw; }
+            .login-box h2 { font-size: 18px; }
+
+            .page-header h1 { font-size: 16px; }
+
+            .settings-section { padding: 16px; }
+            .settings-section h3 { font-size: 14px; }
+            .settings-label { font-size: 13px; }
+
+            .btn-settings-save { width: 100%; }
+
+            .file-upload-area { padding: 14px; }
+            .file-upload-area svg { width: 28px; height: 28px; }
+
+            .toast {
+                font-size: 13px;
+                padding: 10px 16px;
+                max-width: 90vw;
+                white-space: normal;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Overlay -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <h2>پنل مدیریت VPN</h2>
+        <p>برای دسترسی به پنل وارد شوید</p>
+        <input type="password" id="loginPassword" placeholder="رمز عبور" onkeypress="if(event.key==='Enter')doLogin()">
+        <button onclick="doLogin()">ورود</button>
+        <div class="login-error" id="loginError">رمز عبور اشتباه است</div>
+    </div>
+</div>
+
+<!-- Mobile Menu Button -->
+<button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleSidebar()">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- Admin Layout -->
+<div class="admin-layout" id="adminLayout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>VPN Panel</h2>
+            <small>نسخه 1.0</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active" onclick="return showPage('dashboard', this)">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                <span>داشبورد</span>
+            </a></li>
+            <li><a href="#" onclick="return showPage('openvpn', this)">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                <span>سرورهای OpenVPN</span>
+            </a></li>
+            <li><a href="#" onclick="return showPage('cisco', this)">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/></svg>
+                <span>سرورهای Cisco</span>
+            </a></li>
+            <li><a href="#" onclick="return showPage('l2tp', this)">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/></svg>
+                <span>سرورهای L2TP</span>
+            </a></li>
+            <li><a href="#" onclick="return showPage('settings', this)">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                <span>تنظیمات</span>
+            </a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="index.html">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span>بازگشت به سایت</span>
+            </a>
+            <a href="#" onclick="doLogout();return false">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+                <span>خروج</span>
+            </a>
+            <a href="https://github.com/hasan1808/paneladdres.git" target="_blank" style="color:#888;font-size:12px;justify-content:center;padding:12px 0;border-top:1px solid #2a2a5a;margin-top:8px;">
+                <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                GitHub
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- ===== DASHBOARD ===== -->
+        <div class="page-section active" id="page-dashboard">
+            <div class="page-header">
+                <div>
+                    <h1>داشبورد</h1>
+                    <div class="breadcrumb">خانه / داشبورد</div>
+                </div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="stat-total">0</div>
+                    <div class="stat-label">کل سرورها</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-number" id="stat-openvpn">0</div>
+                    <div class="stat-label">سرور OpenVPN</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-number" id="stat-cisco">0</div>
+                    <div class="stat-label">سرور Cisco</div>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-number" id="stat-l2tp">0</div>
+                    <div class="stat-label">سرور L2TP</div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>عملیات سریع</h3>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        افزودن سرور جدید
+                        <small>یک سرور جدید به لیست اضافه کنید</small>
+                    </div>
+                    <button class="btn-add" onclick="showPage('openvpn', null); openModal('openvpn')">افزودن</button>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        مشاهده سایت اصلی
+                        <small>صفحه دانلود سرورها را ببینید</small>
+                    </div>
+                    <a href="index.html" class="btn-add" style="text-decoration:none;">مشاهده</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== OPENVPN PAGE ===== -->
+        <div class="page-section" id="page-openvpn">
+            <div class="page-header">
+                <div>
+                    <h1>سرورهای OpenVPN</h1>
+                    <div class="breadcrumb">خانه / OpenVPN</div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>لیست سرورها</h3>
+                    <button class="btn-add" onclick="openModal('openvpn')">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        افزودن سرور
+                    </button>
+                </div>
+                <div class="mobile-table" id="mobile-openvpn"></div>
+                <div class="desktop-table" style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>پرچم</th>
+                                <th>نام سرور</th>
+                                <th>فایل کانفیگ</th>
+                                <th>منطقه</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-openvpn"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== CISCO PAGE ===== -->
+        <div class="page-section" id="page-cisco">
+            <div class="page-header">
+                <div>
+                    <h1>سرورهای Cisco</h1>
+                    <div class="breadcrumb">خانه / Cisco</div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>لیست سرورها</h3>
+                    <button class="btn-add" onclick="openModal('cisco')">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        افزودن سرور
+                    </button>
+                </div>
+                <div class="mobile-table" id="mobile-cisco"></div>
+                <div class="desktop-table" style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>پرچم</th>
+                                <th>نام سرور</th>
+                                <th>آدرس</th>
+                                <th>منطقه</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-cisco"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== L2TP PAGE ===== -->
+        <div class="page-section" id="page-l2tp">
+            <div class="page-header">
+                <div>
+                    <h1>سرورهای L2TP</h1>
+                    <div class="breadcrumb">خانه / L2TP</div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-header">
+                    <h3>لیست سرورها</h3>
+                    <button class="btn-add" onclick="openModal('l2tp')">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        افزودن سرور
+                    </button>
+                </div>
+                <div class="mobile-table" id="mobile-l2tp"></div>
+                <div class="desktop-table" style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>پرچم</th>
+                                <th>نام سرور</th>
+                                <th>آدرس</th>
+                                <th>منطقه</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-l2tp"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SETTINGS PAGE ===== -->
+        <div class="page-section" id="page-settings">
+            <div class="page-header">
+                <div>
+                    <h1>تنظیمات</h1>
+                    <div class="breadcrumb">خانه / تنظیمات</div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>تنظیمات عمومی</h3>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        رمز عبور پنل مدیریت
+                        <small>برای تغییر رمز عبور ورود استفاده می‌شود</small>
+                    </div>
+                    <input type="password" class="settings-input" id="setting-password" value="admin123">
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        نمایش سرورهای غیرفعال
+                        <small>آیا سرورهای غیرفعال در سایت نمایش داده شوند؟</small>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="setting-show-inactive">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        Cisco - نام کاربری
+                        <small>نام کاربری پیش‌فرض Cisco AnyConnect</small>
+                    </div>
+                    <input type="text" class="settings-input" id="setting-cisco-user" value="vpn_user">
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        Cisco - رمز عبور
+                        <small>رمز عبور پیش‌فرض Cisco AnyConnect</small>
+                    </div>
+                    <input type="password" class="settings-input" id="setting-cisco-pass" value="vpn_pass">
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        L2TP - PSK
+                        <small>کلید از پیش مشترک L2TP/IPsec</small>
+                    </div>
+                    <input type="text" class="settings-input" id="setting-l2tp-psk" value="l2tp_secret_key">
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        L2TP - نام کاربری
+                        <small>نام کاربری پیش‌فرض L2TP</small>
+                    </div>
+                    <input type="text" class="settings-input" id="setting-l2tp-user" value="vpn_user">
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        L2TP - رمز عبور
+                        <small>رمز عبور پیش‌فرض L2TP</small>
+                    </div>
+                    <input type="password" class="settings-input" id="setting-l2tp-pass" value="vpn_pass">
+                </div>
+                <button class="btn-settings-save" onclick="saveSettings()">ذخیره تنظیمات</button>
+            </div>
+            <div class="settings-section">
+                <h3>مدیریت داده‌ها</h3>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        ریست کردن تمام سرورها
+                        <small>تمام سرورهای ذخیره شده را حذف می‌کند</small>
+                    </div>
+                    <button class="btn-add" style="background:#ff6b6b;" onclick="resetAllData()">ریست</button>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        دانلود داده‌ها (JSON)
+                        <small>تمام تنظیمات و سرورها را دانلود کنید</small>
+                    </div>
+                    <button class="btn-add" style="background:#70a1ff;" onclick="exportData()">دانلود</button>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        آپلود داده‌ها (JSON)
+                        <small>داده‌ها را از فایل JSON وارد کنید</small>
+                    </div>
+                    <div>
+                        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+                        <button class="btn-add" style="background:#ffa502;" onclick="document.getElementById('importFile').click()">آپلود</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <h3 id="modalTitle">افزودن سرور جدید</h3>
+        <input type="hidden" id="editId">
+        <div class="form-group">
+            <label>نوع پروتکل</label>
+            <select id="formProtocol" onchange="onProtocolChange()">
+                <option value="openvpn">OpenVPN</option>
+                <option value="cisco">Cisco AnyConnect</option>
+                <option value="l2tp">L2TP / IPsec</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>نام سرور (فارسی)</label>
+            <input type="text" id="formName" placeholder="مثال: آلمان" style="direction:rtl;">
+        </div>
+        <div class="form-group">
+            <label>پرچم (ایموجی)</label>
+            <input type="text" id="formFlag" placeholder="مثال: 🇩🇪" style="direction:ltr; text-align:center; font-size:20px;">
+        </div>
+        <div class="form-group" id="addressGroup">
+            <label>آدرس سرور</label>
+            <input type="text" id="formAddress" placeholder="مثال: vpn-de.cisco.site">
+        </div>
+        <div class="form-group" id="ovpnFileGroup" style="display:none;">
+            <label>فایل کانفیگ OpenVPN (.ovpn)</label>
+            <div class="file-upload-area" id="fileUploadArea">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                <p>فایل .ovpn را اینجا رها کنید یا کلیک کنید</p>
+                <div class="file-name" id="fileName"></div>
+            </div>
+            <div class="ovpn-content-box" id="ovpnContentBox"></div>
+            <input type="file" id="formOvpnFile" accept=".ovpn" style="display:none;">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>منطقه</label>
+                <select id="formRegion">
+                    <option value="europe">اروپا (Europe)</option>
+                    <option value="asia">آسیا و اقیانوسیه (Asia Pacific)</option>
+                    <option value="americas">آمریکا (Americas)</option>
+                    <option value="mea">خاورمیانه و آفریقا (MEA)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>وضعیت</label>
+                <select id="formStatus">
+                    <option value="active">فعال</option>
+                    <option value="inactive">غیرفعال</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">لغو</button>
+            <button class="btn-save" onclick="saveServer()">ذخیره</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_PASSWORD = 'admin123';
+
+function flagHtml(emoji, alt) {
+    try {
+        const code = [...emoji].map(c => String.fromCharCode(c.codePointAt(0) - 0x1F1E6 + 97)).join('');
+        return `<img src="https://flagcdn.com/w40/${code}.png" alt="${alt}" style="width:28px;height:21px;border-radius:3px;vertical-align:middle;" onerror="this.outerHTML='<span style=\\'font-size:28px\\'>${emoji}</span>'">`;
+    } catch(e) {
+        return `<span style="font-size:28px">${emoji}</span>`;
+    }
+}
+
+const REGION_MAP = {
+    'europe':'اروپا','asia':'آسیا و اقیانوسیه','americas':'آمریکا','mea':'خاورمیانه و آفریقا'
+};
+
+function getDefaultServers() {
+    return {
+        openvpn: [
+            {id:'ov1',name:'سوئیس',flag:'🇨🇭',address:'ch.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov2',name:'ایتالیا',flag:'🇮🇹',address:'it.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov3',name:'فرانسه',flag:'🇫🇷',address:'fr.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov4',name:'فنلاند',flag:'🇫🇮',address:'fi.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov5',name:'سوئد',flag:'🇸🇪',address:'se.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov6',name:'لهستان',flag:'🇵🇱',address:'pl.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov7',name:'اوکراین',flag:'🇺🇦',address:'ua.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov8',name:'ترکیه',flag:'🇹🇷',address:'tr.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov9',name:'آلمان',flag:'🇩🇪',address:'de.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov10',name:'اسپانیا',flag:'🇪🇸',address:'es.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov11',name:'هلند',flag:'🇳🇱',address:'nl.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov12',name:'انگلیس',flag:'🇬🇧',address:'gb.eu.static.ovpn',region:'europe',status:'active',ovpnFileName:''},
+            {id:'ov13',name:'اندونزی',flag:'🇮🇩',address:'id.ap.static.ovpn',region:'asia',status:'active',ovpnFileName:''},
+            {id:'ov14',name:'چین',flag:'🇨🇳',address:'cn.ap.static.ovpn',region:'asia',status:'active',ovpnFileName:''},
+            {id:'ov15',name:'استرالیا',flag:'🇦🇺',address:'au.ap.static.ovpn',region:'asia',status:'active',ovpnFileName:''},
+            {id:'ov16',name:'ایالات متحده',flag:'🇺🇸',address:'us.am.static.ovpn',region:'americas',status:'active',ovpnFileName:''},
+            {id:'ov17',name:'کانادا',flag:'🇨🇦',address:'ca.am.static.ovpn',region:'americas',status:'active',ovpnFileName:''},
+            {id:'ov18',name:'ایران',flag:'🇮🇷',address:'ir.mea.static.ovpn',region:'mea',status:'active',ovpnFileName:''},
+            {id:'ov19',name:'امارات متحده',flag:'🇦🇪',address:'ae.mea.static.ovpn',region:'mea',status:'active',ovpnFileName:''},
+            {id:'ov20',name:'ارمنستان',flag:'🇦🇲',address:'am.mea.static.ovpn',region:'mea',status:'active',ovpnFileName:''},
+            {id:'ov21',name:'آذربایجان',flag:'🇦🇿',address:'az.mea.static.ovpn',region:'mea',status:'active',ovpnFileName:''},
+        ],
+        cisco: [
+            {id:'ci1',name:'سوئیس',flag:'🇨🇭',address:'vpn-ch.cisco.site',region:'europe',status:'active'},
+            {id:'ci2',name:'ایتالیا',flag:'🇮🇹',address:'vpn-it.cisco.site',region:'europe',status:'active'},
+            {id:'ci3',name:'فرانسه',flag:'🇫🇷',address:'vpn-fr.cisco.site',region:'europe',status:'active'},
+            {id:'ci4',name:'آلمان',flag:'🇩🇪',address:'vpn-de.cisco.site',region:'europe',status:'active'},
+            {id:'ci5',name:'انگلیس',flag:'🇬🇧',address:'vpn-gb.cisco.site',region:'europe',status:'active'},
+            {id:'ci6',name:'هلند',flag:'🇳🇱',address:'vpn-nl.cisco.site',region:'europe',status:'active'},
+            {id:'ci7',name:'سنگاپور',flag:'🇸🇬',address:'vpn-sg.cisco.site',region:'asia',status:'active'},
+            {id:'ci8',name:'ژاپن',flag:'🇯🇵',address:'vpn-jp.cisco.site',region:'asia',status:'active'},
+            {id:'ci9',name:'استرالیا',flag:'🇦🇺',address:'vpn-au.cisco.site',region:'asia',status:'active'},
+            {id:'ci10',name:'ایالات متحده',flag:'🇺🇸',address:'vpn-us.cisco.site',region:'americas',status:'active'},
+            {id:'ci11',name:'کانادا',flag:'🇨🇦',address:'vpn-ca.cisco.site',region:'americas',status:'active'},
+        ],
+        l2tp: [
+            {id:'l1',name:'سوئیس',flag:'🇨🇭',address:'l2tp-ch.vpn.server',region:'europe',status:'active'},
+            {id:'l2',name:'ایتالیا',flag:'🇮🇹',address:'l2tp-it.vpn.server',region:'europe',status:'active'},
+            {id:'l3',name:'فرانسه',flag:'🇫🇷',address:'l2tp-fr.vpn.server',region:'europe',status:'active'},
+            {id:'l4',name:'آلمان',flag:'🇩🇪',address:'l2tp-de.vpn.server',region:'europe',status:'active'},
+            {id:'l5',name:'انگلیس',flag:'🇬🇧',address:'l2tp-gb.vpn.server',region:'europe',status:'active'},
+            {id:'l6',name:'هلند',flag:'🇳🇱',address:'l2tp-nl.vpn.server',region:'europe',status:'active'},
+            {id:'l7',name:'سنگاپور',flag:'🇸🇬',address:'l2tp-sg.vpn.server',region:'asia',status:'active'},
+            {id:'l8',name:'ژاپن',flag:'🇯🇵',address:'l2tp-jp.vpn.server',region:'asia',status:'active'},
+            {id:'l9',name:'استرالیا',flag:'🇦🇺',address:'l2tp-au.vpn.server',region:'asia',status:'active'},
+            {id:'l10',name:'ایالات متحده',flag:'🇺🇸',address:'l2tp-us.vpn.server',region:'americas',status:'active'},
+            {id:'l11',name:'کانادا',flag:'🇨🇦',address:'l2tp-ca.vpn.server',region:'americas',status:'active'},
+        ]
+    };
+}
+
+function loadData() {
+    let data = localStorage.getItem('vpn_servers');
+    if (!data) { data = getDefaultServers(); saveData(data); }
+    else { data = JSON.parse(data); }
+    return data;
+}
+
+function saveData(data) { localStorage.setItem('vpn_servers', JSON.stringify(data)); }
+
+function loadSettings() {
+    let s = localStorage.getItem('vpn_settings');
+    if (!s) {
+        s = {password:DEFAULT_PASSWORD,showInactive:false,ciscoUser:'vpn_user',ciscoPass:'vpn_pass',l2tpPsk:'l2tp_secret_key',l2tpUser:'vpn_user',l2tpPass:'vpn_pass'};
+        localStorage.setItem('vpn_settings', JSON.stringify(s));
+    } else { s = JSON.parse(s); }
+    return s;
+}
+
+function saveSettings() {
+    const s = {
+        password: document.getElementById('setting-password').value || DEFAULT_PASSWORD,
+        showInactive: document.getElementById('setting-show-inactive').checked,
+        ciscoUser: document.getElementById('setting-cisco-user').value,
+        ciscoPass: document.getElementById('setting-cisco-pass').value,
+        l2tpPsk: document.getElementById('setting-l2tp-psk').value,
+        l2tpUser: document.getElementById('setting-l2tp-user').value,
+        l2tpPass: document.getElementById('setting-l2tp-pass').value,
+    };
+    localStorage.setItem('vpn_settings', JSON.stringify(s));
+    showToast('تنظیمات ذخیره شد');
+}
+
+function loadSettingsToForm() {
+    const s = loadSettings();
+    document.getElementById('setting-password').value = s.password;
+    document.getElementById('setting-show-inactive').checked = s.showInactive;
+    document.getElementById('setting-cisco-user').value = s.ciscoUser;
+    document.getElementById('setting-cisco-pass').value = s.ciscoPass;
+    document.getElementById('setting-l2tp-psk').value = s.l2tpPsk;
+    document.getElementById('setting-l2tp-user').value = s.l2tpUser;
+    document.getElementById('setting-l2tp-pass').value = s.l2tpPass;
+}
+
+// Auth
+function doLogin() {
+    const pw = document.getElementById('loginPassword').value;
+    const settings = loadSettings();
+    if (pw === settings.password) {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('adminLayout').classList.add('active');
+        loadSettingsToForm();
+        refreshAll();
+    } else {
+        document.getElementById('loginError').style.display = 'block';
+    }
+}
+
+function doLogout() {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('adminLayout').classList.remove('active');
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').style.display = 'none';
+}
+
+// Sidebar toggle for mobile
+function toggleSidebar() {
+    var s = document.getElementById('sidebar');
+    var o = document.getElementById('sidebarOverlay');
+    if (s) { s.classList.toggle('open'); console.log('sidebar toggled', s.classList); }
+    if (o) { o.classList.toggle('active'); console.log('overlay toggled', o.classList); }
+}
+
+// Navigation
+function showPage(page, el) {
+    document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (page === 'settings') loadSettingsToForm();
+    // Close mobile sidebar
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('active');
+    return false;
+}
+
+// Render tables
+function renderTable(type) {
+    const data = loadData();
+    const servers = data[type] || [];
+    const tbody = document.getElementById('table-' + type);
+    const mobileDiv = document.getElementById('mobile-' + type);
+    const showInactive = loadSettings().showInactive;
+    const filtered = showInactive ? servers : servers.filter(s => s.status === 'active');
+
+    if (filtered.length === 0) {
+        const empty = `<tr><td colspan="7" class="empty-state">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <div>سروری یافت نشد</div>
+        </td></tr>`;
+        tbody.innerHTML = empty;
+        if (mobileDiv) mobileDiv.innerHTML = '<div style="text-align:center;padding:30px;color:#666;">سروری یافت نشد</div>';
+        return;
+    }
+
+    // Desktop table
+    tbody.innerHTML = filtered.map(s => {
+        const isOvpn = type === 'openvpn';
+        const fileCol = isOvpn
+            ? `<td style="font-size:12px;color:${s.ovpnFileName ? '#00d4aa' : '#555'};">${s.ovpnFileName ? 'آپلود شده' : 'ندارد'}</td>`
+            : '';
+        const addressCol = isOvpn ? '' : `<td class="td-address">${s.address}</td>`;
+        return `<tr>
+            <td class="td-flag">${flagHtml(s.flag, s.name)}</td>
+            <td>${s.name}</td>
+            ${addressCol}
+            ${fileCol}
+            <td class="td-region">${REGION_MAP[s.region] || s.region}</td>
+            <td><span class="td-status ${s.status}">${s.status === 'active' ? 'فعال' : 'غیرفعال'}</span></td>
+            <td>
+                <div class="td-actions">
+                    <button class="btn-icon" onclick="editServer('${type}','${s.id}')" title="ویرایش">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    </button>
+                    <button class="btn-icon delete" onclick="deleteServer('${type}','${s.id}')" title="حذف">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // Mobile cards
+    if (mobileDiv) {
+        mobileDiv.innerHTML = filtered.map(s => {
+            const isOvpn = type === 'openvpn';
+            return `
+            <div class="mobile-card">
+                <div class="mobile-card-header">
+                    <div class="mobile-card-info">
+                        ${flagHtml(s.flag, s.name)}
+                        <span class="name">${s.name}</span>
+                    </div>
+                    <span class="td-status ${s.status}">${s.status === 'active' ? 'فعال' : 'غیرفعال'}</span>
+                </div>
+                <div class="mobile-card-details">
+                    ${!isOvpn ? `<div class="mobile-card-row">
+                        <span class="label">آدرس:</span>
+                        <span class="value">${s.address}</span>
+                    </div>` : ''}
+                    ${isOvpn ? `<div class="mobile-card-row">
+                        <span class="label">فایل .ovpn:</span>
+                        <span class="value" style="direction:rtl;font-family:inherit;color:${s.ovpnFileName ? '#00d4aa' : '#555'};">${s.ovpnFileName ? 'آپلود شده' : 'ندارد'}</span>
+                    </div>` : ''}
+                    <div class="mobile-card-row">
+                        <span class="label">منطقه:</span>
+                        <span class="value" style="direction:rtl;font-family:inherit;">${REGION_MAP[s.region] || s.region}</span>
+                    </div>
+                </div>
+                <div class="mobile-card-actions">
+                    <button class="btn-icon" onclick="editServer('${type}','${s.id}')">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    </button>
+                    <button class="btn-icon delete" onclick="deleteServer('${type}','${s.id}')">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+}
+
+function refreshAll() {
+    renderTable('openvpn');
+    renderTable('cisco');
+    renderTable('l2tp');
+    updateStats();
+}
+
+function updateStats() {
+    const data = loadData();
+    document.getElementById('stat-openvpn').textContent = data.openvpn.length;
+    document.getElementById('stat-cisco').textContent = data.cisco.length;
+    document.getElementById('stat-l2tp').textContent = data.l2tp.length;
+    document.getElementById('stat-total').textContent = data.openvpn.length + data.cisco.length + data.l2tp.length;
+}
+
+// Modal
+let currentOvpnContent = '';
+let currentOvpnFileName = '';
+let currentOvpnFile = null;
+
+function onProtocolChange() {
+    const proto = document.getElementById('formProtocol').value;
+    document.getElementById('addressGroup').style.display = proto === 'openvpn' ? 'none' : 'block';
+    document.getElementById('ovpnFileGroup').style.display = proto === 'openvpn' ? 'block' : 'none';
+}
+
+function openModal(type, id) {
+    document.getElementById('modalOverlay').classList.add('active');
+    document.getElementById('editId').value = '';
+    document.getElementById('modalTitle').textContent = 'افزودن سرور جدید';
+    document.getElementById('formProtocol').value = type;
+    document.getElementById('formName').value = '';
+    document.getElementById('formFlag').value = '';
+    document.getElementById('formAddress').value = '';
+    document.getElementById('formRegion').value = 'europe';
+    document.getElementById('formStatus').value = 'active';
+
+    onProtocolChange();
+    document.getElementById('fileName').textContent = '';
+    document.getElementById('ovpnContentBox').style.display = 'none';
+    document.getElementById('formOvpnFile').value = '';
+    currentOvpnContent = '';
+    currentOvpnFileName = '';
+    currentOvpnFile = null;
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+}
+
+// OVPN File handling
+const fileUploadArea = document.getElementById('fileUploadArea');
+const formOvpnFile = document.getElementById('formOvpnFile');
+
+fileUploadArea.addEventListener('click', () => formOvpnFile.click());
+
+fileUploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    fileUploadArea.style.borderColor = '#00d4aa';
+    fileUploadArea.style.background = 'rgba(0,212,170,0.05)';
+});
+
+fileUploadArea.addEventListener('dragleave', () => {
+    fileUploadArea.style.borderColor = '#2a2a5a';
+    fileUploadArea.style.background = 'transparent';
+});
+
+fileUploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileUploadArea.style.borderColor = '#2a2a5a';
+    fileUploadArea.style.background = 'transparent';
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.ovpn')) {
+        handleOvpnFile(file);
+    } else {
+        showToast('فقط فایل .ovpn مجاز است');
+    }
+});
+
+formOvpnFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleOvpnFile(file);
+});
+
+function handleOvpnFile(file) {
+    document.getElementById('fileName').textContent = file.name;
+    currentOvpnFileName = file.name;
+    currentOvpnFile = file;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        currentOvpnContent = ev.target.result;
+        const box = document.getElementById('ovpnContentBox');
+        box.textContent = currentOvpnContent.substring(0, 500) + (currentOvpnContent.length > 500 ? '\n...' : '');
+        box.style.display = 'block';
+    };
+    reader.readAsText(file);
+}
+
+async function uploadOvpnFile(file) {
+    const formData = new FormData();
+    formData.append('ovpn_file', file);
+    const resp = await fetch('upload.php', { method: 'POST', body: formData });
+    const result = await resp.json();
+    if (!result.success) throw new Error(result.error);
+    return result.filename;
+}
+
+async function deleteOvpnFile(filename) {
+    if (!filename) return;
+    await fetch('delete.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename })
+    });
+}
+
+async function saveServer() {
+    const type = document.getElementById('formProtocol').value;
+    const editId = document.getElementById('editId').value;
+    const name = document.getElementById('formName').value.trim();
+    const flag = document.getElementById('formFlag').value.trim();
+    const address = document.getElementById('formAddress').value.trim();
+    const region = document.getElementById('formRegion').value;
+    const status = document.getElementById('formStatus').value;
+    const isOvpn = type === 'openvpn';
+
+    if (!name) {
+        showToast('لطفاً نام سرور را وارد کنید');
+        return;
+    }
+    if (!isOvpn && !address) {
+        showToast('لطفاً آدرس سرور را وارد کنید');
+        return;
+    }
+    if (isOvpn && !editId && !currentOvpnFile) {
+        showToast('لطفاً فایل .ovpn را آپلود کنید');
+        return;
+    }
+
+    const data = loadData();
+
+    if (editId) {
+        const idx = data[type].findIndex(s => s.id === editId);
+        if (idx !== -1) {
+            const update = { ...data[type][idx], name, flag: flag || '🏳️', region, status };
+            if (isOvpn) {
+                if (currentOvpnFile) {
+                    await deleteOvpnFile(data[type][idx].ovpnFileName);
+                    const uploadedName = await uploadOvpnFile(currentOvpnFile);
+                    update.ovpnFileName = uploadedName;
+                }
+            } else {
+                update.address = address;
+            }
+            data[type][idx] = update;
+        }
+    } else {
+        const id = type.substring(0,2) + '_' + Date.now();
+        const server = { id, name, flag: flag || '🏳️', region, status };
+        if (isOvpn) {
+            server.address = '';
+            if (currentOvpnFile) {
+                const uploadedName = await uploadOvpnFile(currentOvpnFile);
+                server.ovpnFileName = uploadedName;
+            } else {
+                server.ovpnFileName = '';
+            }
+        } else {
+            server.address = address;
+        }
+        data[type].push(server);
+    }
+
+    saveData(data);
+    closeModal();
+    refreshAll();
+    showToast(editId ? 'سرور ویرایش شد' : 'سرور اضافه شد');
+}
+
+function editServer(type, id) {
+    const data = loadData();
+    const server = data[type].find(s => s.id === id);
+    if (!server) return;
+
+    const isOvpn = type === 'openvpn';
+
+    document.getElementById('modalOverlay').classList.add('active');
+    document.getElementById('editId').value = id;
+    document.getElementById('modalTitle').textContent = 'ویرایش سرور';
+    document.getElementById('formProtocol').value = type;
+    document.getElementById('formName').value = server.name;
+    document.getElementById('formFlag').value = server.flag;
+    document.getElementById('formAddress').value = server.address || '';
+    document.getElementById('formRegion').value = server.region;
+    document.getElementById('formStatus').value = server.status;
+
+    onProtocolChange();
+    document.getElementById('formOvpnFile').value = '';
+    currentOvpnContent = '';
+    currentOvpnFileName = '';
+    currentOvpnFile = null;
+
+    if (isOvpn) {
+        if (server.ovpnFileName) {
+            document.getElementById('fileName').textContent = server.ovpnFileName || 'فایل قبلی بارگذاری شده';
+            const box = document.getElementById('ovpnContentBox');
+            box.textContent = server.ovpnFileName;
+            box.style.display = 'block';
+            currentOvpnFileName = server.ovpnFileName || '';
+        } else {
+            document.getElementById('fileName').textContent = '';
+            document.getElementById('ovpnContentBox').style.display = 'none';
+        }
+    }
+}
+
+async function deleteServer(type, id) {
+    if (!confirm('آیا از حذف این سرور مطمئن هستید؟')) return;
+    const data = loadData();
+    const server = data[type].find(s => s.id === id);
+    if (server && server.ovpnFileName) {
+        await deleteOvpnFile(server.ovpnFileName);
+    }
+    data[type] = data[type].filter(s => s.id !== id);
+    saveData(data);
+    refreshAll();
+    showToast('سرور حذف شد');
+}
+
+function resetAllData() {
+    if (!confirm('تمام داده‌ها ریست می‌شوند. آیا مطمئن هستید؟')) return;
+    saveData(getDefaultServers());
+    refreshAll();
+    showToast('داده‌ها ریست شد');
+}
+
+function exportData() {
+    const data = loadData();
+    const settings = loadSettings();
+    const blob = new Blob([JSON.stringify({servers:data, settings:settings}, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'vpn-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    showToast('فایل برون‌بری دانلود شد');
+}
+
+function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            const imported = JSON.parse(ev.target.result);
+            if (imported.servers) saveData(imported.servers);
+            if (imported.settings) localStorage.setItem('vpn_settings', JSON.stringify(imported.settings));
+            refreshAll();
+            loadSettingsToForm();
+            showToast('داده‌ها با موفقیت وارد شد');
+        } catch(err) {
+            showToast('خطا در خواندن فایل');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 2500);
+}
+</script>
+</body>
+</html>
